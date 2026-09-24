@@ -95,8 +95,8 @@ if st.button("🚀 ابدأ بناء الفيلم", type="primary", use_containe
             
             try:
                 response = client.models.generate_content(
-                    model="gemini-3.6-flash
-",
+                    model="gemini-1.5-flash"
+
                     contents=prompt_text
                 )
                 
