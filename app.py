@@ -1,108 +1,66 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 
+# إعدادات الصفحة
 st.set_page_config(
-    page_title="فِلْمَتي AI — صانع الأفلام",
+    page_title="فِلْمَتي AI - صانع الأفلام",
     page_icon="🎬",
     layout="centered"
 )
 
-st.markdown("""
-<style>
-    .main {
-        direction: rtl;
-        text-align: right;
-    }
-    .stTextInput, .stTextArea, .stSelectbox, .stMultiSelect {
-        direction: rtl;
-    }
-</style>
-""", unsafe_allow_html=True)
+st.title("🎬 فِلْمَتي AI")
+st.markdown("### من فكرة صغيرة... إلى فيلم كامل")
+st.markdown("اصنع قستك، شخصياتك، ومقابض مشاهدك وفيلمك بالذكاء الاصطناعي بكل سهولة.")
 
-st.title("فِلْمَتي AI 🎬")
-st.markdown("### **من فكرة صغيرة... إلى فيلم كامل 🎬**")
-st.write("اصنع قصتك، شخصياتك، ومقابض مشاهدك وفيلمك بالذكاء الاصطناعي بكل سهولة.")
+# الشريط الجانبي لإدخال المفتاح
+st.sidebar.header("إعدادات الاتصال")
+api_key = st.sidebar.text_input("أدخل مفتاح Google AI Studio API", type="password")
 
-st.sidebar.title("⚙️ الإعدادات")
-api_key = st.sidebar.text_input("مفتاح Google AI Studio API Key:", type="password")
-st.sidebar.markdown("---")
-st.sidebar.info("هذه النسخة التجريبية الأولى (MVP) تركز على توليد القصة، الشخصيات، والمشاهد مع برومبتات جاهزة.")
+# المدخلات الرئيسية
+st.markdown("### الخطوة 1 — فكرة الفيلم والمواصفات")
+idea = st.text_area("اكتب فكرة فيلمك هنا...", placeholder="مثال: شاب يكتشف بئراً غامضاً في قرية جبلية يمنية، ويكتشف أن داخله سراً قديماً...")
 
-st.divider()
-
-st.subheader("الخطوة 1 — فكرة الفيلم والمواصفات")
-
-idea = st.text_area(
-    "✍️ اكتب فكرة فيلمك هنا...",
-    placeholder="مثال: شاب يكتشف بئراً غامضاً في قرية جبلية يمنية، ويكتشف أن داخله سراً قديماً..."
+genres = st.multiselect(
+    "نوع الفيلم:",
+    ["غموض", "مغامرة", "دراما", "أكشن", "رعب", "كوميدي", "خيال علمي"],
+    default=["غموض", "دراما"]
 )
 
-col1, col2 = st.columns(2)
-with col1:
-    genres = st.multiselect(
-        "نوع الفيلم:",
-        ["مغامرة", "غموض", "رعب", "أكشن", "دراما", "رومانسي", "خيال", "كوميدي"],
-        default=["غموض", "مغامرة"]
-    )
-with col2:
-    duration = st.selectbox(
-        "مدة الفيلم المقدرة:",
-        ["1 دقيقة", "5 دقائق", "10 دقائق", "30 دقيقة", "60 دقيقة", "90 دقيقة"]
-    )
+duration = st.selectbox("مدة الفيلم المقدرة:", ["1 دقيقة", "3 دقائق", "5 دقائق", "10 دقائق"])
+aspect_ratio = st.selectbox("نسبة الفيديو:", ["TikTok / Shorts — 9:16", "YouTube — 16:9"])
 
-aspect_ratio = st.selectbox(
-    "نسبة الفيديو:",
-    ["16:9 — YouTube / فيلم", "9:16 — TikTok / Shorts", "1:1 — Instagram"]
-)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-if st.button("🚀 ابدأ بناء الفيلم", type="primary", use_container_width=True):
+# زر التنفيذ
+if st.button("🚀 ابدأ بناء الفيلم"):
     if not api_key:
         st.error("الرجاء إدخال مفتاح Google AI Studio API في الشريط الجانبي أولاً.")
-    elif not idea.strip():
-        st.warning("الرجاء كتابة فكرة الفيلم لنتمكن من البدء.")
+    elif not idea:
+        st.warning("الرجاء كتابة فكرة الفيلم أولاً.")
     else:
-        client = genai.Client(api_key=api_key)
-        
-        with st.spinner("🧠 غرفة الذكاء الاصطناعي تبدع الآن: يتم بناء القصة، الشخصيات، وتقسيم المشاهد..."):
+        try:
+            # تهيئة مفتاح الاتصال بجيميني
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-1.5-flash")
             
-            prompt_text = f"""
-            أنت مخرج سينمائي وكاتب سيناريو محترف وخبير في الذكاء الاصطناعي التوليدي.
-            بناءً على فكرة الفيلم التالية، قم بإنشاء مشروع متكامل باللغة العربية (مع توفير برومبتات بالإنجليزية للصور والفيديوهات):
-            
-            - الفكرة: {idea}
-            - الأنواع: {', '.join(genres)}
-            - المدة المستهدفة: {duration}
-            - نسبة العرض: {aspect_ratio}
+            prompt = f"""
+            أنت خبير ومحترف في صناعة الأفلام وكتابة السيناريو. قم بتحويل الفكرة التالية إلى خطة فيلم متكاملة ومفصلة:
+            - فكرة الفيلم: {idea}
+            - أنواع الفيلم: {', '.join(genres)}
+            - المدة المقدرة: {duration}
+            - نسبة الفيديو: {aspect_ratio}
 
-            قم بتنظيم الإجابة في الأقسام التالية بوضوح وبشكل منسق:
-            
-            ### 📖 1. ملخص القصة والحبكة
-            (اكتب قصة شيقة ومفصلة مستوحاة من الفكرة).
-            
-            ### 👤 2. الشخصيات الرئيسية والمرجع البصري
-            (اذكر اسم الشخصية، العمر، الوصف والملابس بتفصيل دقيق لضمان ثبات المظهر بصرياً).
-            
-            ### 🎬 3. مشاهد الفيلم الأولى (المشاهد الرئيسية)
-            (قسّم بداية الفيلم إلى 3 إلى 5 مشاهد رئيسية، ولكل مشهد اكتب:
-            - رقم المشهد والمكان/الوقت (مثلاً: المشهد 01 — القرية — الليل)
-            - الوصف البصري الأحداث
-            - الحوار بين الشخصيات
-            - Prompt الصورة (باللغة الإنجليزية لكي يتم نسخه لأدوات توليد الصور)
-            - Prompt الفيديو / الحركة (باللغة الإنجليزية))
+            أعطني النتيجة باللغة العربية الفصحى وبشكل منسق واحترافي يتضمن:
+            1. العنوان المقترح للفيلم
+            2. الملخص الدرامي (Logline)
+            3. الشخصيات الرئيسية مع وصف لكل شخصية
+            4. تقسيم المشاهد (Scene Breakdown) مع الحوار والوصف البصري
+            5. اقتراحات الهاشتاقات ووصف جذاب لنشر الفيديو على المنصات.
             """
-            
-            try:
-                response = client.models.generate_content(
-                    model="gemini-1.5-flash"
 
-                    contents=prompt_text
-                )
-                
-                st.success("🎉 تم إنشاء مشروع الفيلم بنجاح في غرفة الذكاء الاصطناعي!")
+            with st.spinner("جاري توليد السيناريو والقصة بالذكاء الاصطناعي... يرجى الانتظار ⏳"):
+                response = model.generate_content(prompt)
+                st.success("تم إنتاج الفيلم بنجاح! 🎉")
                 st.markdown("---")
                 st.markdown(response.text)
-                
-            except Exception as e:
-                st.error(f"حدث خطأ أثناء الاتصال بالذكاء الاصطناعي: {e}")
+
+        except Exception as e:
+            st.error(f"حدث خطأ أثناء الاتصال بالذكاء الاصطناعي: {e}")
