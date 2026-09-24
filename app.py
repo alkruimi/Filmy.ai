@@ -39,7 +39,7 @@ if st.button("🚀 ابدأ بناء الفيلم"):
         try:
             # تهيئة مفتاح الاتصال بجيميني
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-3.6-flash")
             
             prompt = f"""
             أنت خبير ومحترف في صناعة الأفلام وكتابة السيناريو. قم بتحويل الفكرة التالية إلى خطة فيلم متكاملة ومفصلة:
